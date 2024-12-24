@@ -5,6 +5,7 @@ import { NotFoundException } from "../../types/exceptions/NotFoundException";
 import { InvalidRequestBody } from "../../types/exceptions/InvalidRequestBodyException";
 import { comparePasswordWithHash } from "../../auth/password.helper";
 import { HttpResponse } from "../../types/response/HttpResponse";
+import { generateTokens } from "../../auth/token.helper";
 
 
 const addUser = async (user: UserCreateDto) => {
@@ -19,22 +20,27 @@ const getUserById = async (id: string) => {
 }
 const loginUser = async (username: string, password: string) => {
     const response = new HttpResponse();
-    if (!username || !password){
+    if (!username || !password) {
         response.message = new InvalidRequestBody().message;
         return response;
     }
-    const user = await UserModel.findOne({ userName: username });
-    if (!user){
+    const user = await UserModel.findOne({ userName: username }).lean();
+    if (!user) {
         response.message = new InvalidRequestBody().message;
         return response;
     }
-    if(user.userName == username && await comparePasswordWithHash(password, user.password)){
+    if (user.userName == username && await comparePasswordWithHash(password, user.password)) {
         response.message = "Login Successful";
         response.isSuccessful = true;
-        response.data = user;
+        const { accessToken, refreshToken } = await generateTokens(user._id);
+        response.data = {
+            ...user,
+            accessToken,
+            refreshToken
+        };
         return response;
     }
-    else{
+    else {
         response.message = "Invalid Password";
         return response;
     }

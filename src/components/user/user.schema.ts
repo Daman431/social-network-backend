@@ -12,7 +12,8 @@ export interface IUser {
     password: string
     lastName?: string
     gender?: Gender
-    status?: ProfileStatus
+    status?: ProfileStatus,
+    refreshToken: string
 }
 const UserSchema = new Schema<IUser>({
     firstName: { type: String, required: true },
@@ -22,7 +23,8 @@ const UserSchema = new Schema<IUser>({
     password: { type: String, required: true },
     email: { type: String, required: true },
     lastName: String,
-    gender: String
+    gender: String,
+    refreshToken: String
 })
 UserSchema.pre("save",async function(next) {
     try{

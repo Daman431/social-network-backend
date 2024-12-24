@@ -1,7 +1,7 @@
 export class HttpResponse{
     message: string;
     isSuccessful: boolean;
-    data: any
+    data: any;
     constructor(message?:string,isSuccessful?:boolean,data?:any){
         this.data = data ?? null;
         this.isSuccessful = isSuccessful ?? false;
