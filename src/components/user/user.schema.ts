@@ -1,4 +1,4 @@
-import { Schema } from "mongoose";
+import { Schema, Types } from "mongoose";
 import { Gender } from "../../enums/gender/Gender";
 import { ProfileStatus } from "../../enums/profileStatus/ProfileStatus";
 import { generatePasswordHash } from "../../auth/password.helper";
@@ -14,6 +14,7 @@ export interface IUser {
     gender?: Gender
     status?: ProfileStatus,
     refreshToken: string
+    _id?: Types.ObjectId;
 }
 const UserSchema = new Schema<IUser>({
     firstName: { type: String, required: true },

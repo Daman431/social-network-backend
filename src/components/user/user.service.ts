@@ -6,6 +6,7 @@ import { InvalidRequestBody } from "../../types/exceptions/InvalidRequestBodyExc
 import { comparePasswordWithHash } from "../../auth/password.helper";
 import { HttpResponse } from "../../types/response/HttpResponse";
 import { generateTokens } from "../../auth/token.helper";
+import { Response } from "express";
 
 
 const addUser = async (user: UserCreateDto) => {
@@ -13,11 +14,12 @@ const addUser = async (user: UserCreateDto) => {
     return await userM.save()
 }
 const getUserById = async (id: string) => {
-    if (!mongoose.Types.ObjectId.isValid(id)) return new InvalidRequestBody();
-    const user = await UserModel.findById(id);
-    if (!user.email) return new NotFoundException()
+    if (!mongoose.Types.ObjectId.isValid(id)) throw new InvalidRequestBody();
+    const user = await UserModel.findById(id).lean();
+    if (!user.email) throw new NotFoundException()
     return user;
 }
+
 const loginUser = async (username: string, password: string) => {
     const response = new HttpResponse();
     if (!username || !password) {
@@ -46,4 +48,8 @@ const loginUser = async (username: string, password: string) => {
     }
 }
 
-export { addUser, getUserById, loginUser };
+const setTokenCookie = (res: Response, name:string, token:string) => {
+    res.cookie(name, token, { secure: process.env.ENVIRONMENT == "prod", httpOnly: true });
+}
+
+export { addUser, getUserById, loginUser, setTokenCookie };
