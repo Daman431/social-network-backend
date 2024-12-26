@@ -1,9 +1,10 @@
 import { Expose } from 'class-transformer';
 import { ProfileStatus } from '../../enums/profileStatus/ProfileStatus';
 import { Gender } from '../../enums/gender/Gender';
-import { Types } from 'mongoose';
 
-export class UserGetDTO {
+export class UserLoginDTO {
+  @Expose()
+  _id:string
   @Expose()
   firstName: string
   @Expose()
@@ -21,8 +22,5 @@ export class UserGetDTO {
   @Expose()
   accessToken: string
   @Expose()
-  followers: Array<Types.ObjectId>
-  @Expose()
-  following: Array<Types.ObjectId>
-
+  refreshToken: string
 }

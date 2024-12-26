@@ -11,9 +11,9 @@ export const authMiddleware = (req:Request,res:Response,next:NextFunction) => {
         res.status(401).send("Token invalid or expired!");
     }
 }
-export const unless = (path, middleware) => {
+export const unless = (middleware,...paths) => {
     return (req, res, next) => {
-        if (path === req.path) {
+        if (paths.some(path => path == req.path)) {
             return next();
         } else {
             return middleware(req, res, next);
