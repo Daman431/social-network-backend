@@ -1,10 +1,12 @@
 export class HttpResponse{
     message: string;
     isSuccessful: boolean;
-    data: any
-    constructor(message?:string,isSuccessful?:boolean,data?:any){
+    data: any;
+    status: number;
+    constructor(message?:string,data?:any,isSuccessful?:boolean,status?:number){
         this.data = data ?? null;
-        this.isSuccessful = isSuccessful ?? false;
+        this.isSuccessful = isSuccessful ?? true;
         this.message = message || '';
+        this.status = status ?? 200;
     }
 }

@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from "express";
 import userRouter from "./components/user/user.controller";
+import cookieParser from "cookie-parser";
 import { connectToDB } from "./db/connection";
 
 const app = express();
@@ -8,6 +9,7 @@ const port = process.env.PORT;
 connectToDB();
 // To parse the json body throughout the app
 app.use(express.json())
+app.use(cookieParser())
 app.use("/user",userRouter);
 app.get("/",(req,res) => {
     res.send("Route is active!");

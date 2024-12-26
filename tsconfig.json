@@ -2,6 +2,7 @@
     "compilerOptions": {
       "module": "NodeNext",
       "esModuleInterop": true,
+      "experimentalDecorators": true,
       "target": "es6",
       "sourceMap": true,
       "outDir": "dist"

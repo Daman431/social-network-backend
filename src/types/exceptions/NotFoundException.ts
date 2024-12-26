@@ -1,6 +1,6 @@
 export class NotFoundException {
     message:string;
-    constructor(){
-        this.message = "Not Found";
+    constructor(message?:string){
+        this.message = message ?? "Not Found";
     }
 }
