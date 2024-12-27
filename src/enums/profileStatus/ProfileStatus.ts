@@ -1,1 +1,4 @@
-export type ProfileStatus = "Public" | "Private";
+export enum Status{
+    PUBLIC = "Public",
+    PRIVATE = "Private"
+};

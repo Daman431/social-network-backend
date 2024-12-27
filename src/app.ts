@@ -3,6 +3,7 @@ import express from "express";
 import userRouter from "./components/user/user.controller";
 import cookieParser from "cookie-parser";
 import { connectToDB } from "./db/connection";
+import postRouter from './components/post/post.controller';
 
 const app = express();
 const port = process.env.PORT;
@@ -11,6 +12,7 @@ connectToDB();
 app.use(express.json())
 app.use(cookieParser())
 app.use("/user",userRouter);
+app.use("/post",postRouter)
 app.get("/",(req,res) => {
     res.send("Route is active!");
 })
