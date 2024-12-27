@@ -1,6 +1,6 @@
 import { Schema, Types } from "mongoose";
 import { Gender } from "../../enums/gender/Gender";
-import { ProfileStatus } from "../../enums/profileStatus/ProfileStatus";
+import { Status } from "../../enums/profileStatus/ProfileStatus";
 import { generatePasswordHash } from "../../auth/password.helper";
 import UserModel from "./user.model";
 
@@ -13,31 +13,33 @@ export interface IUser {
     password: string
     lastName?: string
     gender?: Gender
-    status?: ProfileStatus,
+    status?: Status,
     refreshToken: string
     _id?: Types.ObjectId;
+    posts: Types.ObjectId[]
     followers: Types.ObjectId[]
     following: Types.ObjectId[]
 }
 const UserSchema = new Schema<IUser>({
     firstName: { type: String, required: true },
     mobile: { type: String, required: true },
-    status: { type: String, default: "Public" },
+    status: { type: String, enum: Status, default: Status.PUBLIC },
     userName: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    followers: {type: [Types.ObjectId], default: []},
-    following: {type: [Types.ObjectId], default: []},
+    posts: {type: [Types.ObjectId], default: [], ref: "post"},
+    followers: { type: [Types.ObjectId], default: [], ref: "user" },
+    following: { type: [Types.ObjectId], default: [], ref: "user" },
     lastName: String,
     gender: String,
     refreshToken: String
 })
-UserSchema.pre("save",async function(next) {
-    try{
+UserSchema.pre("save", async function (next) {
+    try {
         this.password = await generatePasswordHash(this.password);
         next();
     }
-    catch(err){
+    catch (err) {
         console.log(err)
         next(err);
     }

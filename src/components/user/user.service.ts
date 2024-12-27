@@ -1,15 +1,17 @@
-import mongoose, { Types } from "mongoose";
+import mongoose, { model, Types } from "mongoose";
 import UserCreateDto from "../../dtos/user/user-create.dto";
 import UserModel from "./user.model";
 import { NotFoundException } from "../../types/exceptions/NotFoundException";
 import { InvalidRequestBody } from "../../types/exceptions/InvalidRequestBodyException";
 import { comparePasswordWithHash } from "../../auth/password.helper";
 import { generateTokens } from "../../auth/token.helper";
-import { Response } from "express";
+import { Request, Response } from "express";
 import { plainToClass } from "class-transformer";
 import { UserLoginDTO } from "../../dtos/user/user-login.dto";
 import { UserGetDTO } from "../../dtos/user/user-get.dto";
 import { ExistingException } from "../../types/exceptions/ExistingException";
+import { JwtPayload, verify } from "jsonwebtoken";
+import { PostGetDTO } from "../../dtos/post/post-get.dto";
 
 
 const addUser = async (user: UserCreateDto) => {
@@ -29,11 +31,24 @@ const addUser = async (user: UserCreateDto) => {
 }
 const getUserById = async (id: string) => {
     if (!mongoose.Types.ObjectId.isValid(id)) throw new InvalidRequestBody();
-    console.log(id)
-    const user = await UserModel.findById(id).lean();
-    console.log(user)
+    const user = await UserModel.findById(id).populate({
+        path: 'posts',
+        populate: {
+            path: 'comments',
+            model: 'comment'
+        }
+    }).lean();
+    const posts: any = plainToClass(PostGetDTO, user.posts, { excludeExtraneousValues: true });
+    user.posts = posts
     if (!user?.email) throw new NotFoundException("User not found!")
     return user;
+}
+
+const getLoggedInUser = async (req: Request) => {
+    const accessToken = req.cookies.accessToken;
+    const jwtUser: JwtPayload = verify(accessToken, process.env.API_SECRET) as JwtPayload;
+    if (!jwtUser?._id) throw new NotFoundException();
+    return await UserModel.findById(jwtUser?._id);
 }
 
 const loginUser = async (username: string, password: string) => {
@@ -87,7 +102,7 @@ const unfollowUser = async (followId: Types.ObjectId, userId: Types.ObjectId) =>
 }
 
 const getUserAndFollower = async (followId: Types.ObjectId, userId: Types.ObjectId) => {
-    if(followId == userId) throw new ExistingException("Invalid Id")
+    if (followId == userId) throw new ExistingException("Invalid Id")
     const userPromise = UserModel.findOne({ _id: userId });
     const followToPromise = UserModel.findOne({ _id: followId });
     const [user, followTo] = await Promise.all([userPromise, followToPromise]);
@@ -103,4 +118,4 @@ const setTokenCookie = (res: Response, name: string, token: string) => {
     res.cookie(name, token, { secure: process.env.ENVIRONMENT == "prod", httpOnly: true });
 }
 
-export { addUser, getUserById, loginUser, setTokenCookie, followUser, unfollowUser };
+export { addUser, getUserById, loginUser, setTokenCookie, followUser, unfollowUser, getLoggedInUser };

@@ -1,5 +1,5 @@
 import { Expose } from 'class-transformer';
-import { ProfileStatus } from '../../enums/profileStatus/ProfileStatus';
+import { Status } from '../../enums/profileStatus/ProfileStatus';
 import { Gender } from '../../enums/gender/Gender';
 
 export class UserLoginDTO {
@@ -18,7 +18,7 @@ export class UserLoginDTO {
   @Expose()
   gender?: Gender
   @Expose()
-  status?: ProfileStatus
+  status?: Status
   @Expose()
   accessToken: string
   @Expose()
