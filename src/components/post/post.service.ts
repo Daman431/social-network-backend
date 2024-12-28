@@ -1,9 +1,10 @@
-import { Document } from "mongoose";
+import { Document, Types } from "mongoose";
 import PostCreateDTO from "../../dtos/post/post-create.dto";
 import { IUser } from "../user/user.schema";
 import PostModel from "./post.model";
 import { plainToClass } from "class-transformer";
 import { PostGetDTO } from "../../dtos/post/post-get.dto";
+import { IPost } from "./post.schema";
 
 const createPost = async (postBody: PostCreateDTO, author: Document & IUser) => {
     const post = await new PostModel(postBody).save();
@@ -14,10 +15,24 @@ const createPost = async (postBody: PostCreateDTO, author: Document & IUser) => 
     return post;
 }
 
+const likePost = async (postId: string, user: Document & IUser) => {
+    const post = await PostModel.findById(postId);
+    const isLiked = post.likes.some((id) => id.toString() == user._id.toString());
+    if(isLiked) return unlikePost(post,user._id);
+    post.likes.push(user._id);
+    await post.updateOne(post);
+    return post
+}
+const unlikePost = async (post: Document & IPost, userId:Types.ObjectId) => {
+    post.likes = post.likes.filter(id => id.toString() != userId.toString());
+    await post.updateOne(post);
+    return post
+}
+
 const getPostById = async (id: string) => {
     const post = await PostModel.findById(id).populate("comments").lean();
     const formattedPost = plainToClass(PostGetDTO, post, { excludeExtraneousValues: true });
     return formattedPost;
 }
 
-export { createPost, getPostById }
+export { createPost, getPostById, likePost }

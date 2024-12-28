@@ -6,10 +6,12 @@ export interface IPost {
     contentUrls: string[]
     status?: Status
     comments?: Types.ObjectId[]
+    likes: Types.ObjectId[]
     _id?: Types.ObjectId
 }
 const PostSchema = new Schema<IPost>({
     caption: String,
+    likes: { type: [Types.ObjectId], default: [], ref:'user' },
     comments: { type: [Types.ObjectId], default: [], ref:'comment' },
     contentUrls: { type: [String], required: true },
     status: { type: String, enum: Status, default: Status.PUBLIC }
