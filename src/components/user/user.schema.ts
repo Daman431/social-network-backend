@@ -8,7 +8,7 @@ export interface IUser {
     firstName: string
     email: string
     mobile: string
-    userName: string
+    username: string
     password: string
     lastName?: string
     gender?: Gender
@@ -24,7 +24,7 @@ const UserSchema = new Schema<IUser>({
     firstName: { type: String, required: true },
     mobile: { type: String, required: true },
     status: { type: String, enum: Status, default: Status.PUBLIC },
-    userName: { type: String, required: true, unique: true },
+    username: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     posts: {type: [Types.ObjectId], default: [], ref: "post"},

@@ -13,7 +13,7 @@ export const generateRefreshToken = async (userId:string,user?:IUser):Promise<st
     }
     const refreshToken = sign({
         _id: user._id,
-        username: user.userName
+        username: user.username
     },process.env.API_SECRET, {expiresIn: '1d'});
     return refreshToken;
 }
@@ -29,7 +29,7 @@ export const generateAccessToken = async (userId:string,user?:IUser):Promise<str
     }
     const accessToken = sign({
         _id: user._id,
-        username: user.userName
+        username: user.username
     },process.env.API_SECRET, {expiresIn: '1h'});
     return accessToken;
 }

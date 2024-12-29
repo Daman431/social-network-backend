@@ -13,7 +13,7 @@ export class UserLoginDTO {
   @Expose()
   mobile: string
   @Expose()
-  userName: string
+  username: string
   @Expose()
   lastName?: string
   @Expose()
