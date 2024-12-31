@@ -24,10 +24,11 @@ const addUser = async (user: UserCreateDto) => {
     const userM = new UserModel(user);
     const existingUser = await UserModel.findOne({
         $or: [
-            { userName: user.userName },
+            { username: user.username },
             { email: user.email }
         ]
     })
+    console.log(existingUser);
     if (existingUser) {
         throw new ExistingException("User already Exists");
     }
@@ -83,11 +84,11 @@ const loginUser = async (username: string, password: string) => {
     if (!username || !password) {
         throw new InvalidRequestException();
     }
-    const user = await UserModel.findOne({ userName: username }).lean();
+    const user = await UserModel.findOne({ username: username }).lean();
     if (!user) {
         throw new InvalidRequestException();
     }
-    if (user.userName == username && await comparePasswordWithHash(password, user.password)) {
+    if (user.username == username && await comparePasswordWithHash(password, user.password)) {
         const { accessToken, refreshToken } = await generateTokens(user._id.toString());
         const modifiedUser = {
             ...user,
