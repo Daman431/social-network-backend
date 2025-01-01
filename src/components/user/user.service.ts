@@ -28,7 +28,6 @@ const addUser = async (user: UserCreateDto) => {
             { email: user.email }
         ]
     })
-    console.log(existingUser);
     if (existingUser) {
         throw new ExistingException("User already Exists");
     }
