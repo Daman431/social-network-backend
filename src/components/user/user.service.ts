@@ -29,6 +29,10 @@ const addUser = async (user: UserCreateDto) => {
     const data = plainToClass(UserGetDTO, userM, { excludeExtraneousValues: true });
     return data;
 }
+const getAllUsers = async () => {
+    const users = await UserModel.find().lean();
+    return users
+}
 const getUserById = async (id: string) => {
     if (!mongoose.Types.ObjectId.isValid(id)) throw new InvalidRequestBody();
     const user = await UserModel.findById(id).populate({
@@ -67,8 +71,6 @@ const loginUser = async (username: string, password: string) => {
             refreshToken
         }
         const data = plainToClass(UserLoginDTO, modifiedUser, { excludeExtraneousValues: true });
-        //class transformer is overriding the _id field
-        data._id = user._id.toString();
         return data;
     }
     throw new NotFoundException();
@@ -78,12 +80,8 @@ const followUser = async (followId: Types.ObjectId, userId: Types.ObjectId) => {
     if (isFollowed) throw new ExistingException("Already following this user!");
     user.following.push(followId);
     followTo.followers.push(userId);
-    await user.updateOne({
-        following: user.following
-    })
-    await followTo.updateOne({
-        followers: followTo.followers
-    })
+    await user.updateOne(user)
+    await followTo.updateOne(followTo)
     return user;
 }
 
@@ -92,12 +90,25 @@ const unfollowUser = async (followId: Types.ObjectId, userId: Types.ObjectId) =>
     if (!isFollowed) throw new ExistingException("Not following this user!");
     user.following = user.following.filter((id) => id.toString() != followId.toString());
     followTo.followers = followTo.followers.filter((id) => id.toString() != userId.toString());
-    await user.updateOne({
-        following: user.following
-    })
-    await followTo.updateOne({
-        followers: followTo.followers
-    })
+    await user.updateOne(user)
+    await followTo.updateOne(followTo)
+    return user;
+}
+
+const blockUser = async (blockedUserId: Types.ObjectId, userId: Types.ObjectId) => {
+    const { isBlocked, user } = await getUserAndblockedUser(blockedUserId, userId);
+    if (isBlocked) throw new ExistingException("This user is already blocked!");
+    user.blockedUsers.push(blockedUserId);
+    user.following = user.following.filter(id => id.toString() != blockedUserId.toString());
+    await user.updateOne(user)
+    return user;
+}
+
+const unblockUser = async (blockedUserId: Types.ObjectId, userId: Types.ObjectId) => {
+    const { isBlocked, user } = await getUserAndblockedUser(blockedUserId, userId);
+    if (!isBlocked) throw new ExistingException("This user is not blocked!");
+    user.blockedUsers = user.blockedUsers.filter(id => id.toString() != blockedUserId.toString());
+    await user.updateOne(user)
     return user;
 }
 
@@ -114,8 +125,40 @@ const getUserAndFollower = async (followId: Types.ObjectId, userId: Types.Object
     }
 }
 
+const getUserAndblockedUser = async (blockedUserId: Types.ObjectId, userId: Types.ObjectId) => {
+    if (blockedUserId == userId) throw new ExistingException("Invalid Id")
+    const userPromise = UserModel.findOne({ _id: userId });
+    const followToPromise = UserModel.findOne({ _id: blockedUserId });
+    const [user, blockedUser] = await Promise.all([userPromise, followToPromise]);
+    const isBlocked = user.blockedUsers.some((id) => id.toString() == blockedUserId.toString());
+    return {
+        user,
+        blockedUser,
+        isBlocked
+    }
+}
+
 const setTokenCookie = (res: Response, name: string, token: string) => {
     res.cookie(name, token, { secure: process.env.ENVIRONMENT == "prod", httpOnly: true });
 }
 
-export { addUser, getUserById, loginUser, setTokenCookie, followUser, unfollowUser, getLoggedInUser };
+const validateUser = (req: Request) => {
+    const accessToken = req.cookies.accessToken;
+    const jwtUser: JwtPayload = verify(accessToken, process.env.API_SECRET) as JwtPayload;
+    if (!jwtUser?._id) throw new NotFoundException();
+    return new mongoose.Types.ObjectId(jwtUser._id.toString());
+}
+
+export {
+    addUser,
+    getUserById,
+    loginUser,
+    setTokenCookie,
+    followUser,
+    unfollowUser,
+    getLoggedInUser,
+    blockUser,
+    unblockUser,
+    validateUser,
+    getAllUsers
+};

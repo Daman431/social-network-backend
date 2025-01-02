@@ -1,10 +1,13 @@
-import { Expose } from 'class-transformer';
+import { Expose, Transform } from 'class-transformer';
 import { Status } from '../../enums/profileStatus/ProfileStatus';
 import { Gender } from '../../enums/gender/Gender';
 import { Types } from 'mongoose';
 import { PostGetDTO } from '../post/post-get.dto';
 
 export class UserGetDTO {
+  @Expose()
+  @Transform((value) => value.obj._id.toString())
+  _id:string
   @Expose()
   firstName: string
   @Expose()

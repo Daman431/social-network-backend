@@ -1,5 +1,5 @@
 import express, { Request } from "express";
-import { addUser, followUser, getUserById, loginUser, setTokenCookie, unfollowUser } from "./user.service";
+import { addUser, blockUser, followUser, getAllUsers, getUserById, loginUser, setTokenCookie, unblockUser, unfollowUser, validateUser } from "./user.service";
 import { IUser } from "./user.schema";
 import { LoginDto } from "../../dtos/user/login.dto";
 import { generateTokens } from "../../auth/token.helper";
@@ -10,14 +10,25 @@ import { plainToClass } from "class-transformer";
 import { UserGetDTO } from "../../dtos/user/user-get.dto";
 import { HttpResponse } from "../../types/response/HttpResponse";
 import { HttpErroredResponse } from "../../types/response/HttpErroredResponse";
-import { NotFoundException } from "../../types/exceptions/NotFoundException";
-import mongoose, { Types } from "mongoose";
+import { Types } from "mongoose";
 
 const userRouter = express.Router();
 userRouter.use(unless(authMiddleware,"/login", "/"));
 
 userRouter.get("/", (req, res) => {
     res.send("User Routes Active!");
+});
+
+userRouter.get("/all", async(req, res) => {
+    try {
+        const users = await getAllUsers();
+        const data = plainToClass(UserGetDTO, users, { excludeExtraneousValues: true });
+        const response = new HttpResponse("", data);
+        res.send(response);
+    }
+    catch (err) {
+        res.status(500).send(new HttpErroredResponse(err.message));
+    }
 });
 
 userRouter.get("/:id", async (req, res) => {
@@ -46,10 +57,7 @@ userRouter.post("/", async (req: Request<{}, {}, IUser>, res) => {
 userRouter.post("/follow/:id",async (req,res) => {
     try{
         const followerId = new Types.ObjectId(req.params.id)
-        const accessToken = req.cookies.accessToken;
-        const jwtUser: JwtPayload = verify(accessToken, process.env.API_SECRET) as JwtPayload;
-        if(!jwtUser?._id) throw new NotFoundException();
-        const userId = new mongoose.Types.ObjectId(jwtUser._id.toString())
+        const userId = validateUser(req);
         const data = await followUser(followerId,userId);
         res.send(new HttpResponse("Followed successfully",data))
     }
@@ -62,17 +70,37 @@ userRouter.post("/follow/:id",async (req,res) => {
 userRouter.post("/unfollow/:id",async (req,res) => {
     try{
         const followerId = new Types.ObjectId(req.params.id)
-        const accessToken = req.cookies.accessToken;
-        const jwtUser: JwtPayload = verify(accessToken, process.env.API_SECRET) as JwtPayload;
-        if(!jwtUser?._id) throw new NotFoundException();
-        const userId = new mongoose.Types.ObjectId(jwtUser._id.toString())
+        const userId = validateUser(req);
         const data = await unfollowUser(followerId,userId);
         res.send(new HttpResponse("Followed successfully",data))
     }
     catch(err){
         res.status(500).send(new HttpErroredResponse(err?.message));
     }
+})
 
+userRouter.post("/block/:id",async (req,res) => {
+    try{
+        const blockedUserId = new Types.ObjectId(req.params.id)
+        const userId = validateUser(req);
+        const data = await blockUser(blockedUserId,userId);
+        res.send(new HttpResponse("Blocked successfully",data))
+    }
+    catch(err){
+        res.status(500).send(new HttpErroredResponse(err?.message));
+    }
+})
+
+userRouter.post("/unblock/:id",async (req,res) => {
+    try{
+        const blockedUserId = new Types.ObjectId(req.params.id)
+        const userId = validateUser(req);
+        const data = await unblockUser(blockedUserId,userId);
+        res.send(new HttpResponse("Unblocked successfully",data))
+    }
+    catch(err){
+        res.status(500).send(new HttpErroredResponse(err?.message));
+    }
 })
 
 userRouter.post("/refresh", async (req: Request<{}, {}, IUser>, res) => {

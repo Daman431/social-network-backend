@@ -2,7 +2,6 @@ import { Schema, Types } from "mongoose";
 import { Gender } from "../../enums/gender/Gender";
 import { Status } from "../../enums/profileStatus/ProfileStatus";
 import { generatePasswordHash } from "../../auth/password.helper";
-import UserModel from "./user.model";
 
 
 export interface IUser {
@@ -19,6 +18,7 @@ export interface IUser {
     posts: Types.ObjectId[]
     followers: Types.ObjectId[]
     following: Types.ObjectId[]
+    blockedUsers: Types.ObjectId[]
 }
 const UserSchema = new Schema<IUser>({
     firstName: { type: String, required: true },
@@ -30,6 +30,7 @@ const UserSchema = new Schema<IUser>({
     posts: {type: [Types.ObjectId], default: [], ref: "post"},
     followers: { type: [Types.ObjectId], default: [], ref: "user" },
     following: { type: [Types.ObjectId], default: [], ref: "user" },
+    blockedUsers: { type: [Types.ObjectId], default: [], ref: "user" },
     lastName: String,
     gender: String,
     refreshToken: String
