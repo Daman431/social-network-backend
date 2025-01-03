@@ -1,6 +1,12 @@
 import PostModel from "../post/post.model";
 import CommentModel from "./comment.model";
 
+/**
+ * 
+ * @param postId Post ID
+ * @param commentText Input text for comment
+ * @returns Comment
+ */
 const commentOnPost = async (postId: string, commentText: string) => {
     const post = await PostModel.findById(postId);
     const comment = await new CommentModel({
@@ -12,7 +18,12 @@ const commentOnPost = async (postId: string, commentText: string) => {
     })
     return comment;
 }
-
+/**
+ * 
+ * @param commentId Comment ID
+ * @param reply Reply input text
+ * @returns Updated comment with replies
+ */
 const replyOnComment = async (commentId: string, reply: string) => {
     const comment = await getCommentById(commentId);
     const newComment = await new CommentModel({
@@ -25,7 +36,11 @@ const replyOnComment = async (commentId: string, reply: string) => {
     })
     return response;
 }
-
+/**
+ * 
+ * @param id Comment ID
+ * @returns Comment for the given ID
+ */
 const getCommentById = async (id: string) => {
     return await CommentModel.findById(id);
 }

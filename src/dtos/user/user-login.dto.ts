@@ -1,9 +1,10 @@
-import { Expose } from 'class-transformer';
+import { Expose, Transform } from 'class-transformer';
 import { Status } from '../../enums/profileStatus/ProfileStatus';
 import { Gender } from '../../enums/gender/Gender';
 
 export class UserLoginDTO {
   @Expose()
+  @Transform((value) => value.obj._id.toString())
   _id:string
   @Expose()
   firstName: string
