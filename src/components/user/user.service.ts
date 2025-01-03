@@ -10,10 +10,14 @@ import { plainToClass } from "class-transformer";
 import { UserLoginDTO } from "../../dtos/user/user-login.dto";
 import { UserGetDTO } from "../../dtos/user/user-get.dto";
 import { ExistingException } from "../../types/exceptions/ExistingException";
-import { JwtPayload, verify } from "jsonwebtoken";
 import { PostGetDTO } from "../../dtos/post/post-get.dto";
+import { validateAccessToken } from "../../auth/auth-guard";
 
-
+/**
+ * 
+ * @param user User DTO param
+ * @returns Newly created user
+ */
 const addUser = async (user: UserCreateDto) => {
     const userM = new UserModel(user);
     const existingUser = await UserModel.findOne({
@@ -29,10 +33,19 @@ const addUser = async (user: UserCreateDto) => {
     const data = plainToClass(UserGetDTO, userM, { excludeExtraneousValues: true });
     return data;
 }
+/**
+ * 
+ * @returns List of users available
+ */
 const getAllUsers = async () => {
     const users = await UserModel.find().lean();
     return users
 }
+/**
+ * 
+ * @param id User ID
+ * @returns User for the provided ID
+ */
 const getUserById = async (id: string) => {
     if (!mongoose.Types.ObjectId.isValid(id)) throw new InvalidRequestBody();
     const user = await UserModel.findById(id).populate({
@@ -47,14 +60,23 @@ const getUserById = async (id: string) => {
     if (!user?.email) throw new NotFoundException("User not found!")
     return user;
 }
-
+/**
+ * 
+ * @param req Express request param
+ * @returns Logged In User
+ */
 const getLoggedInUser = async (req: Request) => {
     const accessToken = req.cookies.accessToken;
-    const jwtUser: JwtPayload = verify(accessToken, process.env.API_SECRET) as JwtPayload;
-    if (!jwtUser?._id) throw new NotFoundException();
-    return await UserModel.findById(jwtUser?._id);
+    const token = validateAccessToken(accessToken);
+    if (!token?.data._id) throw new NotFoundException();
+    return await UserModel.findById(token?.data._id);
 }
-
+/**
+ * 
+ * @param username Username for user login
+ * @param password Password for user login
+ * @returns Logged in user on sucessful
+ */
 const loginUser = async (username: string, password: string) => {
     if (!username || !password) {
         throw new InvalidRequestBody();
@@ -75,6 +97,12 @@ const loginUser = async (username: string, password: string) => {
     }
     throw new NotFoundException();
 }
+/**
+ * 
+ * @param followId ID for the user to follow
+ * @param userId Logged In user ID
+ * @returns Logged in User details
+ */
 const followUser = async (followId: Types.ObjectId, userId: Types.ObjectId) => {
     const { followTo, isFollowed, user } = await getUserAndFollower(followId, userId);
     if (isFollowed) throw new ExistingException("Already following this user!");
@@ -84,7 +112,12 @@ const followUser = async (followId: Types.ObjectId, userId: Types.ObjectId) => {
     await followTo.updateOne(followTo)
     return user;
 }
-
+/**
+ * 
+ * @param followId ID for the user to follow
+ * @param userId Logged In user ID
+ * @returns Logged in User details
+ */
 const unfollowUser = async (followId: Types.ObjectId, userId: Types.ObjectId) => {
     const { followTo, isFollowed, user } = await getUserAndFollower(followId, userId);
     if (!isFollowed) throw new ExistingException("Not following this user!");
@@ -94,7 +127,12 @@ const unfollowUser = async (followId: Types.ObjectId, userId: Types.ObjectId) =>
     await followTo.updateOne(followTo)
     return user;
 }
-
+/**
+ * 
+ * @param blockedUserId User ID to block
+ * @param userId Logged in User ID
+ * @returns Logged in User ID
+ */
 const blockUser = async (blockedUserId: Types.ObjectId, userId: Types.ObjectId) => {
     const { isBlocked, user } = await getUserAndblockedUser(blockedUserId, userId);
     if (isBlocked) throw new ExistingException("This user is already blocked!");
@@ -103,7 +141,12 @@ const blockUser = async (blockedUserId: Types.ObjectId, userId: Types.ObjectId) 
     await user.updateOne(user)
     return user;
 }
-
+/**
+ * 
+ * @param blockedUserId User ID to block
+ * @param userId Logged in User ID
+ * @returns Logged in User ID
+ */
 const unblockUser = async (blockedUserId: Types.ObjectId, userId: Types.ObjectId) => {
     const { isBlocked, user } = await getUserAndblockedUser(blockedUserId, userId);
     if (!isBlocked) throw new ExistingException("This user is not blocked!");
@@ -111,7 +154,12 @@ const unblockUser = async (blockedUserId: Types.ObjectId, userId: Types.ObjectId
     await user.updateOne(user)
     return user;
 }
-
+/**
+ * 
+ * @param followId Follower User ID
+ * @param userId Logged In User ID
+ * @returns User and Follower details along with if the user is following or not
+ */
 const getUserAndFollower = async (followId: Types.ObjectId, userId: Types.ObjectId) => {
     if (followId == userId) throw new ExistingException("Invalid Id")
     const userPromise = UserModel.findOne({ _id: userId });
@@ -124,7 +172,12 @@ const getUserAndFollower = async (followId: Types.ObjectId, userId: Types.Object
         isFollowed
     }
 }
-
+/**
+ * 
+ * @param blockedUserId User ID to be blocked
+ * @param userId Logged In User ID
+ * @returns User and Blocked User details along with if the user is already blocked or not
+ */
 const getUserAndblockedUser = async (blockedUserId: Types.ObjectId, userId: Types.ObjectId) => {
     if (blockedUserId == userId) throw new ExistingException("Invalid Id")
     const userPromise = UserModel.findOne({ _id: userId });
@@ -137,16 +190,25 @@ const getUserAndblockedUser = async (blockedUserId: Types.ObjectId, userId: Type
         isBlocked
     }
 }
-
+/**
+ * 
+ * @param res Express response param
+ * @param name Cookie name
+ * @param token Token to be set in cookie
+ */
 const setTokenCookie = (res: Response, name: string, token: string) => {
     res.cookie(name, token, { secure: process.env.ENVIRONMENT == "prod", httpOnly: true });
 }
-
+/**
+ * 
+ * @param req Express request param
+ * @returns User ID 
+ */
 const validateUser = (req: Request) => {
     const accessToken = req.cookies.accessToken;
-    const jwtUser: JwtPayload = verify(accessToken, process.env.API_SECRET) as JwtPayload;
-    if (!jwtUser?._id) throw new NotFoundException();
-    return new mongoose.Types.ObjectId(jwtUser._id.toString());
+    const token = validateAccessToken(accessToken);
+    if (!token.data?._id) throw new NotFoundException();
+    return new mongoose.Types.ObjectId(token.data._id.toString());
 }
 
 export {
