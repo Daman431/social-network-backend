@@ -1,11 +1,12 @@
 import express from 'express';
 import { authMiddleware } from '../../auth/auth-guard';
 import PostCreateDTO from '../../dtos/post/post-create.dto';
-import { createPost, getPostById, likePost } from './post.service';
+import { createPost, deletePost, editPost, getPostById, likePost } from './post.service';
 import { HttpResponse } from '../../types/response/HttpResponse';
 import { HttpErroredResponse } from '../../types/response/HttpErroredResponse';
 import { getLoggedInUser } from '../user/user.service';
 import { commentOnPost, replyOnComment } from '../comment/comment.service';
+import { PostUpdateDTO } from '../../dtos/post/post-update.dto';
 
 const postRouter = express.Router();
 postRouter.use(authMiddleware);
@@ -50,9 +51,9 @@ postRouter.post("/:id/like", async (req, res) => {
         const loggedInUser = await getLoggedInUser(req);
         const postId = req.params.id;
         const data = await likePost(postId, loggedInUser);
-        res.send(new HttpResponse("Liked post successfully",data));
+        res.send(new HttpResponse("Liked post successfully", data));
     }
-    catch(err){
+    catch (err) {
         res.status(500).send(new HttpErroredResponse(err.message))
     }
 })
@@ -62,6 +63,31 @@ postRouter.post("/:commentId/reply", async (req, res) => {
         const commentId = req.params.commentId;
         const post = await replyOnComment(commentId, comment)
         res.status(200).send(new HttpResponse(null, post));
+    }
+    catch (err) {
+        res.status(500).send(new HttpErroredResponse(err.message))
+    }
+})
+postRouter.delete("/:id", async (req, res) => {
+    try {
+        const loggedInUser = await getLoggedInUser(req);
+        const postId = req.params.id;
+        const data = await deletePost(postId, loggedInUser);
+        res.status(200).send(new HttpResponse("message", data));
+
+    }
+    catch (err) {
+        res.status(500).send(new HttpErroredResponse(err.message))
+    }
+})
+postRouter.put<{ id: string }, {}, PostUpdateDTO>("/:id", async (req, res) => {
+    try {
+        const body = req.body;
+        const loggedInUser = await getLoggedInUser(req);
+        const postId = req.params.id;
+        const data = await editPost(postId, loggedInUser, body);
+        res.status(200).send(new HttpResponse("message", data));
+
     }
     catch (err) {
         res.status(500).send(new HttpErroredResponse(err.message))

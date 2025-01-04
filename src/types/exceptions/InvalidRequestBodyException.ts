@@ -1,6 +1,6 @@
-export class InvalidRequestBody {
+export class InvalidRequestException {
     message:string;
-    constructor(){
-        this.message = "Invalid request body passed";
+    constructor(message?:string){
+        this.message = message ?? "Invalid request";
     }
 }

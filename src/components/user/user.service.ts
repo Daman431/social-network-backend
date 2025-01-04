@@ -2,7 +2,7 @@ import mongoose, { model, Types } from "mongoose";
 import UserCreateDto from "../../dtos/user/user-create.dto";
 import UserModel from "./user.model";
 import { NotFoundException } from "../../types/exceptions/NotFoundException";
-import { InvalidRequestBody } from "../../types/exceptions/InvalidRequestBodyException";
+import { InvalidRequestException } from "../../types/exceptions/InvalidRequestBodyException";
 import { comparePasswordWithHash } from "../../auth/password.helper";
 import { generateTokens } from "../../auth/token.helper";
 import { Request, Response } from "express";
@@ -47,7 +47,7 @@ const getAllUsers = async () => {
  * @returns User for the provided ID
  */
 const getUserById = async (id: string) => {
-    if (!mongoose.Types.ObjectId.isValid(id)) throw new InvalidRequestBody();
+    if (!mongoose.Types.ObjectId.isValid(id)) throw new InvalidRequestException();
     const user = await UserModel.findById(id).populate({
         path: 'posts',
         populate: {
@@ -79,11 +79,11 @@ const getLoggedInUser = async (req: Request) => {
  */
 const loginUser = async (username: string, password: string) => {
     if (!username || !password) {
-        throw new InvalidRequestBody();
+        throw new InvalidRequestException();
     }
     const user = await UserModel.findOne({ userName: username }).lean();
     if (!user) {
-        throw new InvalidRequestBody();
+        throw new InvalidRequestException();
     }
     if (user.userName == username && await comparePasswordWithHash(password, user.password)) {
         const { accessToken, refreshToken } = await generateTokens(user._id.toString());
