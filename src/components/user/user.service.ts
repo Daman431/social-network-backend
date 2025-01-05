@@ -1,4 +1,4 @@
-import mongoose, { model, Types } from "mongoose";
+import mongoose, { Document, model, Types } from "mongoose";
 import UserCreateDto from "../../dtos/user/user-create.dto";
 import UserModel from "./user.model";
 import { NotFoundException } from "../../types/exceptions/NotFoundException";
@@ -12,6 +12,8 @@ import { UserGetDTO } from "../../dtos/user/user-get.dto";
 import { ExistingException } from "../../types/exceptions/ExistingException";
 import { PostGetDTO } from "../../dtos/post/post-get.dto";
 import { validateAccessToken } from "../../auth/auth-guard";
+import { IUser } from "./user.schema";
+import { UpdateUserDTO } from "../../dtos/user/user-update.dto";
 
 /**
  * 
@@ -210,6 +212,17 @@ const validateUser = (req: Request) => {
     if (!token.data?._id) throw new NotFoundException();
     return new mongoose.Types.ObjectId(token.data._id.toString());
 }
+/**
+ * 
+ * @param userId User Id to be updated
+ * @param updatedUser Updated User DTO
+ * @returns Updated User
+ */
+const updateProfile = async (userId: string, updatedUser: UpdateUserDTO) => {
+    let user = await UserModel.findByIdAndUpdate(userId, updatedUser, { lean: true });
+    user = { ...user, ...updatedUser }
+    return user;
+}
 
 export {
     addUser,
@@ -222,5 +235,6 @@ export {
     blockUser,
     unblockUser,
     validateUser,
-    getAllUsers
+    getAllUsers,
+    updateProfile
 };

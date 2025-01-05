@@ -9,6 +9,7 @@ import {
     setTokenCookie,
     unblockUser,
     unfollowUser,
+    updateProfile,
     validateUser
 } from "./user.service";
 import { IUser } from "./user.schema";
@@ -21,6 +22,7 @@ import { UserGetDTO } from "../../dtos/user/user-get.dto";
 import { HttpResponse } from "../../types/response/HttpResponse";
 import { HttpErroredResponse } from "../../types/response/HttpErroredResponse";
 import { Types } from "mongoose";
+import { UpdateUserDTO } from "../../dtos/user/user-update.dto";
 
 const userRouter = express.Router();
 userRouter.use(unless(authMiddleware, "/login", "/"));
@@ -129,6 +131,20 @@ userRouter.post("/refresh", async (req: Request<{}, {}, IUser>, res) => {
             res.send("Invalid token match");
         }
     }
+})
+
+userRouter.patch<{},{},UpdateUserDTO>("/update",async (req,res) => {
+    try{
+        const body = req.body;
+        const userId = validateUser(req);
+        const data = await updateProfile(userId.toString(),body)
+        res.send(new HttpResponse("Updated profile successfully", data))
+
+    }
+    catch(err){
+        res.status(500).send(new HttpErroredResponse(err?.message));
+    }
+
 })
 
 userRouter.post("/login", async (req: Request<{}, {}, LoginDto>, res) => {
