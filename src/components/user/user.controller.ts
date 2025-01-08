@@ -23,6 +23,7 @@ import { HttpResponse } from "../../types/response/HttpResponse";
 import { HttpErroredResponse } from "../../types/response/HttpErroredResponse";
 import { Types } from "mongoose";
 import { UpdateUserDTO } from "../../dtos/user/user-update.dto";
+import { sendErroredResponse, sendResponse } from "../common/common.service";
 
 const userRouter = express.Router();
 userRouter.use(unless(authMiddleware, "/login", "/"));
@@ -36,10 +37,10 @@ userRouter.get("/all", async (req, res) => {
         const users = await getAllUsers();
         const data = plainToClass(UserGetDTO, users, { excludeExtraneousValues: true });
         const response = new HttpResponse("", data);
-        res.send(response);
+        sendResponse(res, response);
     }
     catch (err) {
-        res.status(500).send(new HttpErroredResponse(err.message));
+        sendErroredResponse(res,err?.message)
     }
 });
 
@@ -48,22 +49,20 @@ userRouter.get("/:id", async (req, res) => {
     try {
         const user = await getUserById(id);
         const data = plainToClass(UserGetDTO, user, { excludeExtraneousValues: true });
-        const response = new HttpResponse("", data);
-        res.send(response);
+        sendResponse(res, data);
     }
     catch (err) {
-        res.status(500).send(new HttpErroredResponse(err.message));
+        sendErroredResponse(res,err?.message)
     }
 })
 
 userRouter.post("/", async (req: Request<{}, {}, IUser>, res) => {
     try {
         const data = await addUser(req.body);
-        const response = new HttpResponse("User created successfully", data);
-        res.send(response);
+        sendResponse(res, data,"User created successfully");
     }
     catch (err) {
-        res.status(500).send(new HttpErroredResponse(err.message));
+        sendErroredResponse(res,err?.message)
     }
 })
 userRouter.post("/follow/:id", async (req, res) => {
@@ -71,10 +70,10 @@ userRouter.post("/follow/:id", async (req, res) => {
         const followerId = new Types.ObjectId(req.params.id)
         const userId = validateUser(req);
         const data = await followUser(followerId, userId);
-        res.send(new HttpResponse("Followed successfully", data))
+        sendResponse(res, data,"Followed successfully");
     }
     catch (err) {
-        res.status(500).send(new HttpErroredResponse(err?.message));
+        sendErroredResponse(res,err?.message)
     }
 
 })
@@ -84,10 +83,10 @@ userRouter.post("/unfollow/:id", async (req, res) => {
         const followerId = new Types.ObjectId(req.params.id)
         const userId = validateUser(req);
         const data = await unfollowUser(followerId, userId);
-        res.send(new HttpResponse("Followed successfully", data))
+        sendResponse(res, data,"Unfollowed successfully");
     }
     catch (err) {
-        res.status(500).send(new HttpErroredResponse(err?.message));
+        sendErroredResponse(res,err?.message)
     }
 })
 
@@ -96,10 +95,11 @@ userRouter.post("/block/:id", async (req, res) => {
         const blockedUserId = new Types.ObjectId(req.params.id)
         const userId = validateUser(req);
         const data = await blockUser(blockedUserId, userId);
-        res.send(new HttpResponse("Blocked successfully", data))
+        sendResponse(res, data,"Blocked successfully");
+
     }
     catch (err) {
-        res.status(500).send(new HttpErroredResponse(err?.message));
+        sendErroredResponse(res,err?.message)
     }
 })
 
@@ -108,10 +108,10 @@ userRouter.post("/unblock/:id", async (req, res) => {
         const blockedUserId = new Types.ObjectId(req.params.id)
         const userId = validateUser(req);
         const data = await unblockUser(blockedUserId, userId);
-        res.send(new HttpResponse("Unblocked successfully", data))
+        sendResponse(res, data,"Unblocked successfully");
     }
     catch (err) {
-        res.status(500).send(new HttpErroredResponse(err?.message));
+        sendErroredResponse(res,err?.message)
     }
 })
 
@@ -125,24 +125,24 @@ userRouter.post("/refresh", async (req: Request<{}, {}, IUser>, res) => {
             const response = await generateTokens(user?._id);
             setTokenCookie(res, "refreshToken", response.refreshToken);
             setTokenCookie(res, "accessToken", response.accessToken);
-            res.send(response);
+            sendResponse(res, response);
         }
         else {
-            res.send("Invalid token match");
+            sendErroredResponse(res, "Invalid token match");
         }
     }
 })
 
-userRouter.patch<{},{},UpdateUserDTO>("/update",async (req,res) => {
-    try{
+userRouter.patch<{}, {}, UpdateUserDTO>("/update", async (req, res) => {
+    try {
         const body = req.body;
         const userId = validateUser(req);
-        const data = await updateProfile(userId.toString(),body)
-        res.send(new HttpResponse("Updated profile successfully", data))
+        const data = await updateProfile(userId.toString(), body)
+        sendResponse(res, data, "Updated profile successfully");
 
     }
-    catch(err){
-        res.status(500).send(new HttpErroredResponse(err?.message));
+    catch (err) {
+        sendErroredResponse(res,err?.message)
     }
 
 })
@@ -156,11 +156,11 @@ userRouter.post("/login", async (req: Request<{}, {}, LoginDto>, res) => {
             setTokenCookie(res, "accessToken", data.accessToken);
         }
         const response = new HttpResponse("Login successful", data);
-        res.send(response);
+        sendResponse(res, response);
     }
     catch (err) {
-        const response = new HttpErroredResponse(err.message, 500);
-        res.status(500).send(response)
+        sendErroredResponse(res,err?.message)
+
     }
 })
 

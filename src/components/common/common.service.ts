@@ -1,4 +1,7 @@
+import { Response } from "express";
 import { defaultPaginationValues, IPaginationRequest } from "../../types/pagination/pagination";
+import { HttpResponse } from "../../types/response/HttpResponse";
+import { HttpErroredResponse } from "../../types/response/HttpErroredResponse";
 
 
 const getPaginationValues = (query: IPaginationRequest) => {
@@ -19,4 +22,11 @@ const getPaginationValues = (query: IPaginationRequest) => {
     }
 }
 
-export { getPaginationValues };
+const sendResponse = (res: Response, data: any, message?: string,status?:number) => {
+    res.send(new HttpResponse(message ?? "", data,true,status || 200))
+}
+const sendErroredResponse = (res: Response, message?: string, status?: number) => {
+    res.status(status || 500).send(new HttpErroredResponse(message, status || 500));
+}
+
+export { getPaginationValues, sendResponse, sendErroredResponse };
