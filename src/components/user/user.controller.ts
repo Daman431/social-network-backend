@@ -155,8 +155,7 @@ userRouter.post("/login", async (req: Request<{}, {}, LoginDto>, res) => {
             setTokenCookie(res, "refreshToken", data.refreshToken);
             setTokenCookie(res, "accessToken", data.accessToken);
         }
-        const response = new HttpResponse("Login successful", data);
-        sendResponse(res, response);
+        sendResponse(res, data);
     }
     catch (err) {
         sendErroredResponse(res,err?.message)

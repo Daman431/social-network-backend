@@ -12,12 +12,12 @@ connectToDB();
 // To parse the json body throughout the app
 app.use(express.json())
 app.use(cookieParser())
-app.use(cors())
-app.use("/user",userRouter);
-app.use("/post",postRouter)
-app.get("/",(req,res) => {
+app.use(cors({ credentials: true, origin: "http://localhost:3000" }))
+app.use("/user", userRouter);
+app.use("/post", postRouter)
+app.get("/", (req, res) => {
     res.send("Route is active!");
 })
-app.listen(port,() => {
+app.listen(port, () => {
     console.log(`The app is running on http://localhost:${port}`);
 })
