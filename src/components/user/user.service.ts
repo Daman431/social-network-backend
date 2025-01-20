@@ -199,7 +199,7 @@ const getUserAndblockedUser = async (blockedUserId: Types.ObjectId, userId: Type
  * @param token Token to be set in cookie
  */
 const setTokenCookie = (res: Response, name: string, token: string) => {
-    res.cookie(name, token, { secure: process.env.ENVIRONMENT == "prod", httpOnly: true });
+    res.cookie(name, token, { secure: true, httpOnly: true, sameSite: 'none'});
 }
 /**
  * 
