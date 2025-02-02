@@ -199,7 +199,17 @@ const getUserAndblockedUser = async (blockedUserId: Types.ObjectId, userId: Type
  * @param token Token to be set in cookie
  */
 const setTokenCookie = (res: Response, name: string, token: string) => {
-    res.cookie(name, token, { secure: true, httpOnly: true, sameSite: 'none'});
+    res.cookie(name, token, { secure: true, httpOnly: true, sameSite: 'none' });
+}
+/**
+ * 
+ * @param res Express response param
+ * @param refreshToken Refresh Token
+ * @param accessToken Access Token
+ */
+const setAuthTokens = (res: Response, refreshToken: string, accessToken: string) => {
+    setTokenCookie(res, "refreshToken", refreshToken);
+    setTokenCookie(res, "accessToken", accessToken);
 }
 /**
  * 
@@ -229,6 +239,7 @@ export {
     getUserById,
     loginUser,
     setTokenCookie,
+    setAuthTokens,
     followUser,
     unfollowUser,
     getLoggedInUser,
